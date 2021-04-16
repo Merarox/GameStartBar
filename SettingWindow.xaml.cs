@@ -22,6 +22,14 @@ namespace GameStartBar
     //GameFolderPath
     public partial class SettingWindow : Window, INotifyPropertyChanged
     {
+        enum ModValues : uint
+        {
+            Alt = 0x0001,
+            Control = 0x0002,
+            Shift = 0x0004,
+            Win = 0x0008
+        }
+
         private Settings settings;
         public List<Commands> CommandList { get; set; }
 
@@ -149,6 +157,33 @@ namespace GameStartBar
                 }
             }
         }
+        private string _modKeyName;
+        public string ModKeyName
+        {
+            get { return _modKeyName; }
+            set
+            {
+                if(_modKeyName != value)
+                {
+                    _modKeyName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _vkName;
+        public string VKName
+        {
+            get { return _vkName; }
+            set
+            {
+                if (_vkName != value)
+                {
+                    _vkName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public WindowClosingEventArgs WindowClosingEvent = new WindowClosingEventArgs();
         public EditButtonPressedEventArgs EditButtonPressedEvent = new EditButtonPressedEventArgs();
@@ -169,7 +204,38 @@ namespace GameStartBar
             this.settings = settings;
             EditButtonPressedEvent.Editable = true;
             CurrentFontSize = settings.GetFontSize();
+
+            SetModName();
+            SetVKName();
+
             LoadSettings();
+        }
+
+        //Convert the settings Int Value to String
+        private void SetModName()
+        {
+            switch(settings.GetMOD()){
+                case (uint)ModValues.Alt: ModKeyName = "Alt"; break;
+                case (uint)ModValues.Control: ModKeyName = "Control"; break;
+                case (uint)ModValues.Shift: ModKeyName = "Shift"; break;
+                case (uint)ModValues.Win: ModKeyName = "Win"; break;
+                default: ModKeyName = ""; break;
+            }
+        }
+
+        //Convert the settings Int Value to String
+        private void SetVKName()
+        {
+            try
+            {
+                int value = Convert.ToInt32(settings.GetVK());
+                VKName = Convert.ToChar(value).ToString();
+            }
+            catch(Exception e)
+            {
+                MessageBox.Show(e.Message);
+                Application.Current.Shutdown();
+            }
         }
 
         //Load the Settings
@@ -254,6 +320,58 @@ namespace GameStartBar
                 OnEditButtonPressed(EditButtonPressedEvent);
                 EditButtonPressedEvent.Editable = true;
                 EditButton.Content = "Edit";
+            }
+        }
+
+        //When the KeyButton is pressed, the Hotkey can be changed
+        private void ModKeyButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (VKName == "-")
+                SetVKName();
+            ModKeyName = "-";
+        }
+
+        //When the VKButton is pressed, the Hotkey can be changed
+        private void VKButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ModKeyName == "-")
+                SetModName();
+            VKName = "-";
+        }
+
+        //Change the Hotkey Button
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(ModKeyName == "-")
+            {
+                switch (e.Key)
+                {
+                    case Key.System: settings.SetMOD((uint)ModValues.Alt); break;
+                    case Key.LeftCtrl: settings.SetMOD((uint)ModValues.Control); break;
+                    case Key.LeftShift: settings.SetMOD((uint)ModValues.Shift); break;
+                    case Key.LWin: settings.SetMOD((uint)ModValues.Win); break;
+                    default: break;
+                }
+                SetModName();
+            }
+            
+            if(VKName == "-")
+            {
+                try
+                {
+                    char c = Convert.ToChar(e.Key.ToString());
+
+                    if (Convert.ToInt32(c) >= 65 && Convert.ToInt32(c) <= 90)
+                    {
+                        settings.SetVK(Convert.ToUInt32(c));
+                    }
+                    SetVKName();
+                }
+                catch(Exception exp)
+                {
+                    MessageBox.Show("Select a Key between A and Z");
+                }
+
             }
         }
 

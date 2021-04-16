@@ -91,7 +91,10 @@ namespace GameStartBar
         {
             Log.writeLog();
             this.DataContext = this;
+            settings.readSettings();
+
             InitializeComponent();
+
             InitializeValues();
             InitializeEvents();
         }
@@ -100,19 +103,18 @@ namespace GameStartBar
         private void InitializeValues()
         {
             Log.writeLog();
-            settings.readSettings();
             settingswindow = new SettingWindow(settings);
 
             SetOriginalSize();
 
-            if (settings.GetPosition().PositionY != 0 && settings.GetPosition().PositionX != 0 && settings.GetPosition().Width != 0 && settings.GetPosition().Height != 0)
+            if (settings.GetPosition().Top != 0 && settings.GetPosition().Left != 0 && settings.GetPosition().Width != 0 && settings.GetPosition().Height != 0)
             {
-                this.Top = settings.GetPosition().PositionY;
-                this.Left = settings.GetPosition().PositionX;
+                this.Top = settings.GetPosition().Top;
+                this.Left = settings.GetPosition().Left;
                 this.Width = settings.GetPosition().Width;
                 this.Height = settings.GetPosition().Height;
             }
-           
+
             TextBoxList.Add(gameTB1);
             TextBoxList.Add(gameTB2);
             TextBoxList.Add(gameTB3);
@@ -163,15 +165,13 @@ namespace GameStartBar
         {
             Log.writeLog();
             var helper = new WindowInteropHelper(this);
-            const uint VK_S = 0x43;
-            const uint MOD_ALT = 0x0001;
-            if (!RegisterHotKey(helper.Handle, HOTKEY_ID, MOD_ALT, VK_S))
+            if (!RegisterHotKey(helper.Handle, HOTKEY_ID, settings.GetMOD(), settings.GetVK()))
             {
                 MessageBox.Show("Couldn't register hotkey, closing application.");
                 Application.Current.Shutdown();
             }
         }
-
+        
         private void UnregisterHotKey()
         {
             Log.writeLog();
@@ -202,8 +202,15 @@ namespace GameStartBar
         private void OnHotKeyPressed()
         {
             Log.writeLog();
-            this.Show();
-            this.Activate();
+            if (this.Visibility == Visibility.Hidden)
+            {
+                this.Show();
+                this.Activate();
+            }
+            else
+            {
+                this.Hide();
+            }
         }
 
         /// <summary>
@@ -213,11 +220,17 @@ namespace GameStartBar
         private void SettingsWindow_OnWindowClosing(object sender, WindowClosingEventArgs e)
         {
             settings = e.SettingsObject;
-            settings.SetXPosition(this.Left);
-            settings.SetYPosition(this.Top);
+            settings.SetTopPosition(this.Top);
+            settings.SetLeftPosition(this.Left); 
             settings.SetWidth(this.Width);
             settings.SetHeight(this.Height);
             settings.SetFontSize(InputTB.FontSize);
+            
+            //Unregister the old HotKey
+            UnregisterHotKey();
+            //Register the new HotKey
+            RegisterHotKey();
+
             settings.writeSettings();
 
             //Load the new Folder and Create the Game List for the new Folder
@@ -306,13 +319,17 @@ namespace GameStartBar
                 {
                     MessageBox.Show("Files not found!");
                     Console.WriteLine(e);
-                    Application.Current.Shutdown();
+                    settings.SelectGameFolderPath();
+                    settings.writeSettings();
+                    LoadFolder();
                 }
             }
             else
             {
                 MessageBox.Show("Directory doesn't Exist!");
-                Application.Current.Shutdown();
+                settings.SelectGameFolderPath();
+                settings.writeSettings();
+                LoadFolder();
             }
         }
         private void CreateCGList()
@@ -358,22 +375,27 @@ namespace GameStartBar
         private void gameTB_KeyDown(object sender, KeyEventArgs e)
         {
             Log.writeLog();
-
-            if(e.Key == Key.Return)
+            if(e.Key == Key.Return && ResultCGList.Count >= 1)
             {
-                if(TextBoxIndex == 0)
+                if (TextBoxIndex == 0)
                 {
                     if (ResultCGList[0].Command.ToLower() == "Settings".ToLower())
                     {
                         settingswindow.Visibility = Visibility.Visible;
                     }
-                    else if(ResultCGList[0].Command.ToLower() == "Exit".ToLower())
+                    else if (ResultCGList[0].Command.ToLower() == "Exit".ToLower())
                     {
                         Application.Current.Shutdown();
                     }
+                    else if (ResultCGList[0].Command.ToLower() == "Update".ToLower())
+                    {
+                        LoadFolder();
+                        CreateCGList();
+                        InputText = "";
+                    }
                     else
                     {
-                        if(ResultCGList[0].Argument != "")
+                        if (ResultCGList[0].Argument != "")
                         {
                             ProcessStartInfo processStartInfo = new ProcessStartInfo();
                             processStartInfo.FileName = ResultCGList[0].Command;
@@ -390,10 +412,27 @@ namespace GameStartBar
                 }
                 else
                 {
-                    InputText = TextBoxList[TextBoxIndex - 1].Text;
-                    TextBoxIndex = 0;
+                    if (ResultCGList[ResultIndex - 1].Command.ToLower() == "Settings".ToLower())
+                    {
+                        settingswindow.Visibility = Visibility.Visible;
+                    }
+                    else if (ResultCGList[ResultIndex - 1].Command.ToLower() == "Exit".ToLower())
+                    {
+                        Application.Current.Shutdown();
+                    }
+                    else if (ResultCGList[ResultIndex - 1].Command.ToLower() == "Update".ToLower())
+                    {
+                        LoadFolder();
+                        CreateCGList();
+                        InputText = "";
+                    }
+                    else
+                    {
+                        Process.Start(ResultCGList[ResultIndex - 1].Command);
+                    }
                 }
-
+                ResultIndex = 0;
+                TextBoxIndex = 0;
             }
             if(e.Key == Key.Tab)
             {
@@ -421,6 +460,10 @@ namespace GameStartBar
                         ResultIndex++;
                     }                 
                 }
+            }
+            if(e.Key == Key.Escape)
+            {
+                this.GameTB_LostFocus(sender, e);
             }
         }
 

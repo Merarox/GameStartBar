@@ -15,8 +15,9 @@ namespace GameStartBar
 
         private static DateTime now = DateTime.Now;
 
-        public static void writeLog([CallerMemberName] string name = null, [CallerFilePath] string path = null)
+        public static void writeLog([CallerMemberName] string name = null, [CallerFilePath] string fullpath = null)
         {
+            string path = fullpath.Substring(fullpath.LastIndexOf(@"\")+1);
             string time = $"[{now.Hour}:{now.Minute}:{now.Second}]";
             writeToFile($"{time} {path} | {name}");
 

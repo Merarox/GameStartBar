@@ -13,19 +13,12 @@ namespace GameStartBar
         public List<Commands> Commands = new List<Commands>();
         public Position Position = new Position();
         public double FontSize { get; set; }
+        public uint VK;
+        public uint MOD;
 
         public SettingsObject()
         {
 
-        }
-
-        public SettingsObject(string gamefolderpath, List<Commands> commandList, Position position, double fontsize)
-        {
-            Log.writeLog();
-            this.GameFolderPath = gamefolderpath;
-            this.Commands = commandList;
-            this.Position = position;
-            this.FontSize = fontsize;
         }
     }
 
@@ -47,18 +40,29 @@ namespace GameStartBar
 
     public class Position
     {
-        public double PositionX { get; set; }
-        public double PositionY { get; set; }
+        public double Top { get; set; }
+        public double Left { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
 
         public Position()
         {
             Log.writeLog();
-            PositionX = 0;
-            PositionY = 0;
-            Width = 0;
-            Height = 0;
+            this.Top = 0;
+            this.Left = 0;
+            this.Width = 0;
+            this.Height = 0;
+        }
+
+        public Position(double top, double left, double width, double height)
+        {
+            Log.writeLog();
+            this.Top = left;
+            this.Left = top;
+            this.Width = width;
+            Console.WriteLine(Width);
+            this.Height = height;
+            Console.WriteLine(Height);
         }
     }
 }

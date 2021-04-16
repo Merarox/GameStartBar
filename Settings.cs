@@ -19,7 +19,29 @@ namespace GameStartBar
         public Settings()
         {
             Log.writeLog();
+            //Default Values
             SettingsPath = "Settings.json";
+            AddCommand("Settings", "Settings", "");
+            AddCommand("Exit", "Exit", "");
+            AddCommand("Update", "Update", "");
+            SetFontSize(48);
+            //C key
+            SetVK(67);
+            //Mod Alt
+            SetMOD(0x0001);
+        }
+
+        public Settings(string gamefolderpath, List<Commands> commandList, Position position, double fontsize, uint vk, uint mod)
+        {
+            Log.writeLog();
+            SettingsPath = "Settings.json";
+            SetGameFolderPath(gamefolderpath);
+            SetCommands(commandList);
+            SetTopPosition(position.Top);
+            SetLeftPosition(position.Left);
+            SetFontSize(fontsize);
+            SetVK(vk);
+            SetMOD(mod);
         }
 
         //Reads the Settings JSON File
@@ -46,11 +68,6 @@ namespace GameStartBar
             {
                 //Create File and select the Game Folder Path
                 SelectGameFolderPath();
-
-                //Set Default Values
-                AddCommand("Settings", "Settings", "");
-                AddCommand("Exit", "Exit", "");
-                SetFontSize(48);
             }
             
         }
@@ -101,7 +118,10 @@ namespace GameStartBar
             else
             {
                 //The Application will be closed if none Folder was selected
-                System.Environment.Exit(1);
+                if(GetGameFolderPath() == "" || GetGameFolderPath() == null)
+                {
+                    System.Environment.Exit(1);
+                }
             }
         }
         public string GetGameFolderPath()
@@ -146,16 +166,16 @@ namespace GameStartBar
             return settingsObject.Position;
         }
 
-        public void SetXPosition(double value)
+        public void SetTopPosition(double value)
         {
             Log.writeLog();
-            settingsObject.Position.PositionX = value;
+            settingsObject.Position.Top = value;
         }
 
-        public void SetYPosition(double value)
+        public void SetLeftPosition(double value)
         {
             Log.writeLog();
-            settingsObject.Position.PositionY = value;
+            settingsObject.Position.Left = value;
         }
 
         public void SetWidth(double value)
@@ -180,6 +200,26 @@ namespace GameStartBar
         {
             Log.writeLog();
             return (int)settingsObject.FontSize;
+        }
+
+        public uint GetVK()
+        {
+            return settingsObject.VK;
+        }
+
+        public void SetVK(uint key)
+        {
+            settingsObject.VK = key;
+        }
+
+        public uint GetMOD()
+        {
+            return settingsObject.MOD;
+        }
+
+        public void SetMOD(uint mod)
+        {
+            settingsObject.MOD = mod;
         }
     }
 }
