@@ -81,6 +81,7 @@ namespace GameStartBar
                     _inputText = value;
                     ResetBorder();
                     SearchResult();
+                    ResultIndex = 0;
                     TextBoxIndex = 0;
                     OnPropertyChanged();
                 }
@@ -431,8 +432,6 @@ namespace GameStartBar
                         Process.Start(ResultCGList[ResultIndex - 1].Command);
                     }
                 }
-                ResultIndex = 0;
-                TextBoxIndex = 0;
             }
             if(e.Key == Key.Tab)
             {
